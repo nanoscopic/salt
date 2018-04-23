@@ -29,8 +29,8 @@
 {%- set is_updateable_master_tgt = is_updateable_tgt + ' and ' + is_master_tgt %}
 {%- set is_updateable_worker_tgt = is_updateable_tgt + ' and ' + is_worker_tgt %}
 
-{%- set all_masters = salt.saltutil.runner('mine.get', tgt=is_master_tgt, fun='network.interfaces', tgt_type='compound').keys() %}
-{%- set super_master = all_masters|first %}
+{%- set all_masters              = salt.caasp_nodes.get_with_expr(is_master_tgt) %}
+{%- set super_master             = all_masters|first %}
 
 # Ensure all nodes with updates are marked as upgrading. This will reduce the time window in which
 # the update-etc-hosts orchestration can run in between machine restarts.
@@ -159,7 +159,7 @@ early-services-setup:
       - etcd-setup
 
 # Get list of masters needing reboot
-{%- set masters = salt.saltutil.runner('mine.get', tgt=is_updateable_master_tgt, fun='network.interfaces', tgt_type='compound') %}
+{%- set masters = salt.caasp_nodes.get_with_expr(is_updateable_master_tgt) %}
 {%- for master_id in masters.keys() %}
 
 {{ master_id }}-clean-shutdown:
@@ -265,7 +265,7 @@ all-masters-post-start-services:
       - {{ master_id }}-reboot-needed-grain
 {%- endfor %}
 
-{%- set workers = salt.saltutil.runner('mine.get', tgt=is_updateable_worker_tgt, fun='network.interfaces', tgt_type='compound') %}
+{%- set workers = salt.caasp_nodes.get_with_expr(is_updateable_worker_tgt) %}
 {%- for worker_id, ip in workers.items() %}
 
 # Call the node clean shutdown script
